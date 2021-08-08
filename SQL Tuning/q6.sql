@@ -37,4 +37,21 @@ with course_cte as(
 			(select crsCode from crs_cte)
 		GROUP BY studId
 			HAVING COUNT(*) = (select count(*) from crs_cte))
+			
+
+-- What was the bottleneck? - Try to avoid subqueries and use JOIN instead.
+-- 		1) Select from Teaching table is redundant as there are no courses in Course table that don't exists in Teaching table.
+-- 		2) There is no need to check deptId = @v8 condition two times in subqueries on Course table. 
+
+WITH v8_courses AS (
+	SELECT crsCode 
+    FROM Course 
+    WHERE deptId = @v8
+)
+SELECT s.name
+FROM Student AS s, Transcript AS t, v8_courses AS v8c
+WHERE t.studId = s.id
+AND v8c.crsCode = t.crsCode
+GROUP BY s.name
+HAVING COUNT(*) = (SELECT COUNT(*) FROM v8_courses);
 
